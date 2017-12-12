@@ -1,0 +1,22 @@
+{
+  "name": "develexe-sortable",
+  "version": "1.0.0",
+  "description": "sortable lib with multi columns and rows",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chybatronik/develexe-sortable.git"
+  },
+  "keywords": [
+    "sortable"
+  ],
+  "author": "Yuri K.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chybatronik/develexe-sortable/issues"
+  },
+  "homepage": "https://github.com/chybatronik/develexe-sortable#readme"
+}
