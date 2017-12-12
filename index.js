@@ -16,8 +16,8 @@ class Sortable{
       isPressed: false,
       // currentRow:-1,
       // currentCol:-1,
-      order: order.clone(),
-      old_order: order.clone(),
+      order: clone(order),
+      old_order: clone(order),
       init_size: this.get_init_size(order),
       allow_use_empty: allow_use_empty ? allow_use_empty : false
     };
@@ -33,7 +33,7 @@ class Sortable{
   add_item_right_col(){
     const col = this.get_right_column_average(1)
     this.state.order.push({id: this.uuidv4(), w:1, h:1, col:col+1, row:1, con: String(this.state.order.length +1)})
-    this.state.old_order = this.state.order.clone()
+    this.state.old_order = clone(this.state.order)
   }
 
   add_item_end_row(){
@@ -45,7 +45,7 @@ class Sortable{
       }
     })
     this.state.order.push({id: this.uuidv4(), w:1, h:1, col:1, row: max_row + 1, con: String(this.state.order.length +1)})
-    this.state.old_order = this.state.order.clone()
+    this.state.old_order = clone(this.state.order)
   }
 
   get_init_size(order){
@@ -1179,7 +1179,7 @@ class Sortable{
     // let copy = Object.assign({}, this.state);
     // this.state.old_order = copy.order;
     // console.log("this.state.old_order:::", this.state.old_order)
-    this.state.old_order = this.state.order.clone()
+    this.state.old_order = clone(this.state.order)
     this.state.topDeltaY = pageY - pressY
     this.state.topDeltaX = pageX - pressX
   }
@@ -1190,7 +1190,7 @@ class Sortable{
     this.state.topDeltaX = 0
     this.state.currentCol = null
     this.state.currentRow = null
-    this.state.old_order = this.state.order.clone()
+    this.state.old_order = clone(this.state.order)
   }
 }
 

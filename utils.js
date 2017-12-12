@@ -1,16 +1,16 @@
 /* eslint-disable */
 
-Object.prototype.clone = function() {
+clone = function(obj) {
   //// eslint-disable-next-line
-  var newObj = (this instanceof Array) ? [] : {};
+  var newObj = (obj instanceof Array) ? [] : {};
   var i;
-  for (i in this) {
+  for (i in obj) {
       if (i === 'clone')
           continue;
-      if (this[i] && typeof this[i] === "object") {
-          newObj[i] = this[i].clone();
+      if (obj[i] && typeof obj[i] === "object") {
+          newObj[i] = clone(obj[i]);
       }
       else
-          newObj[i] = this[i]
+          newObj[i] = obj[i]
   } return newObj;
 };
