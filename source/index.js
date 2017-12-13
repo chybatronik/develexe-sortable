@@ -1,4 +1,18 @@
-import './utils'
+
+clone = (obj)=> {
+  //// eslint-disable-next-line
+  var newObj = (obj instanceof Array) ? [] : {};
+  var i;
+  for (i in obj) {
+      if (i === 'clone')
+          continue;
+      if (obj[i] && typeof obj[i] === "object") {
+          newObj[i] = clone(obj[i]);
+      }
+      else
+          newObj[i] = obj[i]
+  } return newObj;
+};
 
 class Sortable{
   constructor(step_x, step_y, delta, sortable_mode, order, allow_use_empty){
@@ -22,6 +36,7 @@ class Sortable{
       allow_use_empty: allow_use_empty ? allow_use_empty : false
     };
   }
+
 
   uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
