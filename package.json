@@ -1,6 +1,6 @@
 {
   "name": "develexe-sortable",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "sortable lib with multi columns and rows",
   "main": "./distribution/index.js",
   "scripts": {
