@@ -1,24 +1,24 @@
 
 class Sortable{
-  constructor(step_x, step_y, delta, sortable_mode, order, allow_use_empty){
-    console.log("sortable new")
-    order = order ? order : [] //default_order
+  constructor(cellWidth, cellHeight, cellSpacing, mode, cells, isDropOnEmptyAreaAllowed){
+    // console.log("sortable new")
+    cells = cells ? cells : [] //default_order
     this.state = {
-      sortable_mode: sortable_mode ? sortable_mode: "swap", // default, left_right
-      // size_mode: "swap", // default, stick
-      delta: delta ? delta: 5,
-      step_x: step_x ? step_x: 90,
-      step_y: step_y ? step_y: 90,
+      mode: mode ? mode: "SORT", // default, SORT
+      // size_mode: "SWAP", // default, stick
+      cellSpacing: cellSpacing ? cellSpacing: 5,
+      cellWidth: cellWidth ? cellWidth: 90,
+      cellHeight: cellHeight ? cellHeight: 90,
       mouseX: 0,
       mouseY: 0,
       // lastPress: -1,
       isPressed: false,
       // currentRow:-1,
       // currentCol:-1,
-      order: this.clone(order),
-      old_order: this.clone(order),
-      init_size: this.get_init_size(order),
-      allow_use_empty: allow_use_empty ? allow_use_empty : false
+      cells: this.clone(cells),
+      old_order: this.clone(cells),
+      init_size: this.get_init_size(cells),
+      isDropOnEmptyAreaAllowed: isDropOnEmptyAreaAllowed ? isDropOnEmptyAreaAllowed : false
     };
   }
 
@@ -40,35 +40,35 @@ class Sortable{
 
   uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
       return v.toString(16);
     });
   }
 
   add_item_right_col(){
-    const col = this.get_right_column_average(1)
-    this.state.order.push({id: this.uuidv4(), w:1, h:1, col:col+1, row:1, con: String(this.state.order.length +1)})
-    this.state.old_order = this.clone(this.state.order)
+    const defaultColumn = this.get_right_column_average(1)
+    this.state.cells.push({id: this.uuidv4(), colspan:1, rowspan:1, defaultColumn:defaultColumn+1, defaultRow:1, content: String(this.state.cells.length +1)})
+    this.state.old_order = this.clone(this.state.cells)
   }
 
   add_item_end_row(){
-    const copy_order = this.state.order;
+    const copy_order = this.state.cells;
     let max_row = 0
     copy_order.forEach((value, key) => {
-      if(value.row >= max_row){
-        max_row = value.row
+      if(value.defaultRow >= max_row){
+        max_row = value.defaultRow
       }
     })
-    this.state.order.push({id: this.uuidv4(), w:1, h:1, col:1, row: max_row + 1, con: String(this.state.order.length +1)})
-    this.state.old_order = this.clone(this.state.order)
+    this.state.cells.push({id: this.uuidv4(), colspan:1, rowspan:1, defaultColumn:1, defaultRow: max_row + 1, content: String(this.state.cells.length +1)})
+    this.state.old_order = this.clone(this.state.cells)
   }
 
-  get_init_size(order){
+  get_init_size(cells){
     let result = {}
-    const copy_order = Object.assign([], order);
+    const copy_order = Object.assign([], cells);
     copy_order.forEach((value, key) => {
-      if(value.h > 1 || value.w > 1){
-        result[`${value.row}_${value.col}`] = {w: value.w, h: value.h, col: value.col, row: value.row};
+      if(value.rowspan > 1 || value.colspan > 1){
+        result[`${value.defaultRow}_${value.defaultColumn}`] = {colspan: value.colspan, rowspan: value.rowspan, defaultColumn: value.defaultColumn, defaultRow: value.defaultRow};
       }
     })
     // console.log("get_init_size::", result)
@@ -83,54 +83,54 @@ class Sortable{
     // let temp = this.state
     let res_order = []
     let copy = Object.assign({}, this.state);
-    copy.order.forEach((value, key) => {
+    copy.cells.forEach((value, key) => {
       let ttm = value
-      ttm.width = ttm.w * copy.step_x + (ttm.w-1)*copy.delta
-      ttm.height = ttm.h * copy.step_y + (ttm.h-1)*copy.delta
-      ttm.y = ttm.row * (copy.step_y + copy.delta)
-      ttm.x = ttm.col * (copy.step_x + copy.delta)
+      ttm.width = ttm.colspan * copy.cellWidth + (ttm.colspan-1)*copy.cellSpacing
+      ttm.height = ttm.rowspan * copy.cellHeight + (ttm.rowspan-1)*copy.cellSpacing
+      ttm.y = ttm.defaultRow * (copy.cellHeight + copy.cellSpacing)
+      ttm.x = ttm.defaultColumn * (copy.cellWidth + copy.cellSpacing)
       res_order.push(ttm)
     })
-    copy.order = res_order
+    copy.cells = res_order
     return copy
   }
 
-  get_left_column_without_cur(row){
-    console.log("row_______:::", row)
+  get_left_column_without_cur(defaultRow){
+    // console.log("row_______:::", defaultRow)
     let max_column = 0;
-    const {lastPress} = this.state;
+    // const {lastPress} = this.state;
     // let copy = Object.assign({}, this.state);
-    // copy.order.forEach((value, key_y) => {
-    //   //|| row === (value.row + value.h - 1)
-    //   if(row === value.row){
-    //     if(value.col >= max_column){
+    // copy.cells.forEach((value, key_y) => {
+    //   //|| defaultRow === (value.defaultRow + value.rowspan - 1)
+    //   if(defaultRow === value.defaultRow){
+    //     if(value.defaultColumn >= max_column){
     //       if(lastPress.id !== value.id){
     //         console.log("get_right_column_without_cur:::", value)
-    //         max_column = value.col + (value.w-1)
+    //         max_column = value.defaultColumn + (value.colspan-1)
     //       }
     //     }
     //   }
     // })
-    // max_column = this.get_right_column_average(row)
+    // max_column = this.get_right_column_average(defaultRow)
     // console.log("max_right_col", max_right_col)
     let min_col = 0
     Object.keys(this.state.init_size).forEach((str_key, key) => {
       let value = this.state.init_size[str_key]
       if(
-        row > value.row &&
-        row < (value.row+value.h)
+        defaultRow > value.defaultRow &&
+        defaultRow < (value.defaultRow+value.rowspan)
       ){
-        if(min_col > value.col){
-          min_col = value.col
+        if(min_col > value.defaultColumn){
+          min_col = value.defaultColumn
         }
         // console.log("max_right_col::", max_right_col)
-        console.log("(value.col+value.w)::", (value.col+value.w))
+        // console.log("(value.defaultColumn+value.colspan)::", (value.defaultColumn+value.colspan))
         if(
-          max_column < (value.col+value.w) &&
-          value.col == 1
-          // (value.col+value.w) <= max_right_col
+          max_column < (value.defaultColumn+value.colspan) &&
+          value.defaultColumn === 1
+          // (value.defaultColumn+value.colspan) <= max_right_col
         ){
-          max_column =  value.col+value.w - 1
+          max_column =  value.defaultColumn+value.colspan - 1
         }
       }
     })
@@ -143,37 +143,37 @@ class Sortable{
 
   }
 
-  get_right_column_without_cur(row){
-    // console.log("row_______:::", row)
+  get_right_column_without_cur(defaultRow){
+    // console.log("row_______:::", defaultRow)
     let max_column = 0;
     const {lastPress} = this.state;
     let copy = Object.assign({}, this.state);
-    copy.order.forEach((value, key_y) => {
-      //|| row === (value.row + value.h - 1)
-      if(row === value.row){
-        if(value.col >= max_column){
+    copy.cells.forEach((value, key_y) => {
+      //|| defaultRow === (value.defaultRow + value.rowspan - 1)
+      if(defaultRow === value.defaultRow){
+        if(value.defaultColumn >= max_column){
           if(lastPress.id !== value.id){
-            console.log("get_right_column_without_cur:::", value)
-            max_column = value.col + (value.w-1)
+            // console.log("get_right_column_without_cur:::", value)
+            max_column = value.defaultColumn + (value.colspan-1)
           }
         }
       }
     })
-    let max_right_col = this.get_right_column_average(row)
+    let max_right_col = this.get_right_column_average(defaultRow)
     // console.log("max_right_col", max_right_col)
     Object.keys(this.state.init_size).forEach((str_key, key) => {
       let value = this.state.init_size[str_key]
       if(
-        row > value.row &&
-        row < (value.row+value.h)
+        defaultRow > value.defaultRow &&
+        defaultRow < (value.defaultRow+value.rowspan)
       ){
         // console.log("max_right_col::", max_right_col)
-        // console.log("(value.col+value.w)::", (value.col+value.w))
+        // console.log("(value.defaultColumn+value.colspan)::", (value.defaultColumn+value.colspan))
         if(
-          max_column < (value.col+value.w) &&
-          (value.col+value.w) <= max_right_col
+          max_column < (value.defaultColumn+value.colspan) &&
+          (value.defaultColumn+value.colspan) <= max_right_col
         ){
-          max_column =  (value.col+value.w-1)
+          max_column =  (value.defaultColumn+value.colspan-1)
         }
       }
     })
@@ -181,26 +181,26 @@ class Sortable{
     return max_column
   }
 
-  get_right_column(row){
+  get_right_column(defaultRow){
     let max_column = 0;
     let copy = Object.assign({}, this.state);
-    copy.order.forEach((value, key_y) => {
-      if(row === value.row ){
-        if((value.col) >= max_column){
-          max_column = value.col
+    copy.cells.forEach((value, key_y) => {
+      if(defaultRow === value.defaultRow ){
+        if((value.defaultColumn) >= max_column){
+          max_column = value.defaultColumn
         }
       }
     })
     return max_column
   }
 
-  get_right_column_average(row){
+  get_right_column_average(defaultRow){
     let max_column = 0;
     let copy = Object.assign({}, this.state);
     copy.old_order.forEach((value, key_y) => {
-      if(row >= value.row ){
-        if((value.col + value.w-1) >= max_column){
-          max_column = value.col + value.w-1
+      if(defaultRow >= value.defaultRow ){
+        if((value.defaultColumn + value.colspan-1) >= max_column){
+          max_column = value.defaultColumn + value.colspan-1
         }
       }
     })
@@ -213,12 +213,12 @@ class Sortable{
     Object.keys(this.state.init_size).forEach((str_key, key) => {
       value = this.state.init_size[str_key]
       if(
-        item.row > value.row &&
-        item.row < (value.row+value.h)
+        item.defaultRow > value.defaultRow &&
+        item.defaultRow < (value.defaultRow+value.rowspan)
       ){
         if(
-          (item.col+1) >= value.col &&
-          (item.col+1) < (value.col+value.w)
+          (item.defaultColumn+1) >= value.defaultColumn &&
+          (item.defaultColumn+1) < (value.defaultColumn+value.colspan)
         ){
           result =  value
         }
@@ -233,12 +233,12 @@ class Sortable{
     Object.keys(this.state.init_size).forEach((str_key, key) => {
       value = this.state.init_size[str_key]
       if(
-        item.row > value.row &&
-        item.row < (value.row+value.h)
+        item.defaultRow > value.defaultRow &&
+        item.defaultRow < (value.defaultRow+value.rowspan)
       ){
         if(
-          (item.col-1) >= value.col &&
-          (item.col-1) < (value.col+value.w)
+          (item.defaultColumn-1) >= value.defaultColumn &&
+          (item.defaultColumn-1) < (value.defaultColumn+value.colspan)
         ){
           result =  value
         }
@@ -251,79 +251,79 @@ class Sortable{
   move_item_right(item, width){
     //console.log("move_item_right", item, ">>>", width)
     let check_ava;
-    this.state.order.forEach((value, key) => {
+    this.state.cells.forEach((value, key) => {
       if(item.id === value.id){
-        if(this.state.sortable_mode === "left_right"){
-          const max_column = this.get_right_column(value.row)
+        if(this.state.mode === "SORT"){
+          const max_column = this.get_right_column(value.defaultRow)
           // console.log("..........................................")
           // console.log("max_column::::::::::::::::::::", max_column)
-          if(max_column === value.col){
-            // console.log("this.get_left_column_without_cur(value.row)!!!", value.row, " ! ", this.get_left_column_without_cur(value.row+1))
+          if(max_column === value.defaultColumn){
+            // console.log("this.get_left_column_without_cur(value.defaultRow)!!!", value.defaultRow, " ! ", this.get_left_column_without_cur(value.defaultRow+1))
 
-            // value.col = 1
-            value.col = this.get_left_column_without_cur(value.row+1)+1
-            value.row += 1
+            // value.defaultColumn = 1
+            value.defaultColumn = this.get_left_column_without_cur(value.defaultRow+1)+1
+            value.defaultRow += 1
           }else{
             check_ava = this.item_in_init_size_right(value)
             // console.log("==================")
             // console.log("check_ava:::", check_ava)
             if(check_ava){
-              value.col += check_ava.w + 1
+              value.defaultColumn += check_ava.colspan + 1
             }else{
-              value.col += width
+              value.defaultColumn += width
             }
           }
-          // value.w = 1
-          // value.h = 1
-          value.w = 1
-          value.h = 1
+          // value.colspan = 1
+          // value.rowspan = 1
+          value.colspan = 1
+          value.rowspan = 1
           let size, is_not_move;
-          if(this.state.init_size[`${value.row}_${value.col-1}`]){
-            size = this.state.init_size[`${value.row}_${value.col-1}`]
+          if(this.state.init_size[`${value.defaultRow}_${value.defaultColumn-1}`]){
+            size = this.state.init_size[`${value.defaultRow}_${value.defaultColumn-1}`]
             is_not_move = false
           }
-          if(this.state.init_size[`${value.row}_${value.col}`]){
-            size = this.state.init_size[`${value.row}_${value.col}`]
+          if(this.state.init_size[`${value.defaultRow}_${value.defaultColumn}`]){
+            size = this.state.init_size[`${value.defaultRow}_${value.defaultColumn}`]
             is_not_move = true
           }
           if(size){
-            value.h = size.h
-            value.w = size.w
-            value.width = value.w * this.state.step_x + (value.w-1)*this.state.delta
-            value.height = value.h * this.state.step_y + (value.h-1)*this.state.delta
+            value.rowspan = size.rowspan
+            value.colspan = size.colspan
+            value.width = value.colspan * this.state.cellWidth + (value.colspan-1)*this.state.cellSpacing
+            value.height = value.rowspan * this.state.cellHeight + (value.rowspan-1)*this.state.cellSpacing
             if(!is_not_move){
               this.move_item_right(value, 1)
             }
           }
         }else{
-          value.col += width
+          value.defaultColumn += width
         }
       }
     })
   }
 
-  is_left_nothing(row, search_col){
+  is_left_nothing(defaultRow, search_col){
     let res = false
-    console.log("this.state.init_size::", this.state.init_size, row, search_col)
+    // console.log("this.state.init_size::", this.state.init_size, defaultRow, search_col)
     Object.keys(this.state.init_size).forEach((value, key) => {
       // console.log("value:", value)
       // console.log("key:", key)
       let res_is_owner = false
       const lastPress = this.state.init_size[value]
       if(
-        row >= lastPress.row &&
-        row < (lastPress.row + lastPress.h)
+        defaultRow >= lastPress.defaultRow &&
+        defaultRow < (lastPress.defaultRow + lastPress.rowspan)
       ){
         if(
-          search_col >= lastPress.col &&
-          search_col < (lastPress.col + lastPress.w + 1)
+          search_col >= lastPress.defaultColumn &&
+          search_col < (lastPress.defaultColumn + lastPress.colspan + 1)
         ){
           res_is_owner = true;
         }
       }
-      if(res_is_owner && (row !== lastPress.row && search_col !== lastPress.col)){
-        // console.log("res_is_owner:", res_is_owner, search_col, lastPress, (search_col - lastPress.w ))
-        if((search_col - lastPress.w)==1){
+      if(res_is_owner && (defaultRow !== lastPress.defaultRow && search_col !== lastPress.defaultColumn)){
+        // console.log("res_is_owner:", res_is_owner, search_col, lastPress, (search_col - lastPress.colspan ))
+        if((search_col - lastPress.colspan)===1){
           res =  true
         }
       }
@@ -336,44 +336,44 @@ class Sortable{
   }
 
   move_item_left(item, width){
-    console.log("move_item_left::", item.col, "__", item.row, ">>>", width)
+    // console.log("move_item_left::", item.defaultColumn, "__", item.defaultRow, ">>>", width)
     let check_ava;
-    this.state.order.forEach((value, key) => {
+    this.state.cells.forEach((value, key) => {
       if(item.id === value.id){
-        if(this.state.sortable_mode === "left_right"){
-          console.log("is_left_nothing::::", this.is_left_nothing(value.row, value.col))
-          // if(value.col === 1){
-          if(this.is_left_nothing(value.row, value.col)){
-            // console.log("this.get_right_column_without_cur(value.row)!!!", value.row, " ! ", this.get_right_column_without_cur(value.row-1))
-            value.col = (this.get_right_column_without_cur(value.row-1)+1)
-            value.row -= 1
-            // value.col = (this.get_right_column_without_cur(value.row)+1)
+        if(this.state.mode === "SORT"){
+          // console.log("is_left_nothing::::", this.is_left_nothing(value.defaultRow, value.defaultColumn))
+          // if(value.defaultColumn === 1){
+          if(this.is_left_nothing(value.defaultRow, value.defaultColumn)){
+            // console.log("this.get_right_column_without_cur(value.defaultRow)!!!", value.defaultRow, " ! ", this.get_right_column_without_cur(value.defaultRow-1))
+            value.defaultColumn = (this.get_right_column_without_cur(value.defaultRow-1)+1)
+            value.defaultRow -= 1
+            // value.defaultColumn = (this.get_right_column_without_cur(value.defaultRow)+1)
           }else{
             check_ava = this.item_in_init_size_left(value)
             // console.log("check_ava::", check_ava)
             if(check_ava){
-              value.col -= check_ava.w + 1
+              value.defaultColumn -= check_ava.colspan + 1
             }else{
-              value.col -= width
+              value.defaultColumn -= width
             }
           }
-          value.w = 1
-          value.h = 1
+          value.colspan = 1
+          value.rowspan = 1
           let size, is_not_move;
-          if(this.state.init_size[`${value.row}_${value.col-1}`]){
-            size = this.state.init_size[`${value.row}_${value.col-1}`]
+          if(this.state.init_size[`${value.defaultRow}_${value.defaultColumn-1}`]){
+            size = this.state.init_size[`${value.defaultRow}_${value.defaultColumn-1}`]
             is_not_move = false
           }
-          if(this.state.init_size[`${value.row}_${value.col}`]){
-            size = this.state.init_size[`${value.row}_${value.col}`]
+          if(this.state.init_size[`${value.defaultRow}_${value.defaultColumn}`]){
+            size = this.state.init_size[`${value.defaultRow}_${value.defaultColumn}`]
             is_not_move = true
           }
 
           if(size){
-            value.h = size.h
-            value.w = size.w
-            value.width = value.w * this.state.step_x + (value.w-1)*this.state.delta
-            value.height = value.h * this.state.step_y + (value.h-1)*this.state.delta
+            value.rowspan = size.rowspan
+            value.colspan = size.colspan
+            value.width = value.colspan * this.state.cellWidth + (value.colspan-1)*this.state.cellSpacing
+            value.height = value.rowspan * this.state.cellHeight + (value.rowspan-1)*this.state.cellSpacing
             if(!is_not_move){
               // console.log("move_item_left............")
               this.move_item_left(value, 1)
@@ -381,7 +381,7 @@ class Sortable{
           }
         }
         else{
-          value.col -= width
+          value.defaultColumn -= width
         }
       }
     })
@@ -389,36 +389,36 @@ class Sortable{
 
   move_item_bottom(item, width){
     //console.log("move_item_bottom", item, "-----", width)
-    this.state.order.forEach((value, key) => {
+    this.state.cells.forEach((value, key) => {
       if(item.id === value.id){
-        value.row += width
+        value.defaultRow += width
       }
     })
   }
 
   move_item_top(item, width){
     //console.log("move_item_bottom", item, "-----", width)
-    this.state.order.forEach((value, key) => {
+    this.state.cells.forEach((value, key) => {
       if(item.id === value.id){
-        value.row -= width
+        value.defaultRow -= width
       }
     })
   }
 
-  available_item_on_old_order(row, col){
+  available_item_on_old_order(defaultRow, defaultColumn){
     //console.log("------------------")
-    // console.log("available_item", col, row,  this.state.old_order, this.state.order)
-    const {lastPress} = this.state;
-    let item_cur = this.get_item_id(lastPress.id)
+    // console.log("available_item", defaultColumn, defaultRow,  this.state.old_order, this.state.cells)
+    // const {lastPress} = this.state;
+    // let item_cur = this.get_item_id(lastPress.id)
     let copy = Object.assign({}, this.state);
     let count = 0;
     copy.old_order.forEach((value, key_y) => {
       if(
         // item_cur.id !== value.id &&
-        (value.col) <= col &&
-        (value.col + value.w) > col &&
-        (value.row) <= row &&
-        (value.row + value.h) > row
+        (value.defaultColumn) <= defaultColumn &&
+        (value.defaultColumn + value.colspan) > defaultColumn &&
+        (value.defaultRow) <= defaultRow &&
+        (value.defaultRow + value.rowspan) > defaultRow
       ){
         // console.log("available_item:::value::", value)
         count+= 1;
@@ -433,20 +433,20 @@ class Sortable{
     }
   }
 
-  available_item(row, col){
+  available_item(defaultRow, defaultColumn){
     // console.log("------------÷------")
-    // console.log("available_item", col, row,  this.state.old_order, this.state.order)
+    // console.log("available_item", defaultColumn, defaultRow,  this.state.old_order, this.state.cells)
     const {lastPress} = this.state;
     let item_cur = this.get_item_id(lastPress.id)
     let copy = Object.assign({}, this.state);
     let count = 0;
-    copy.order.forEach((value, key_y) => {
+    copy.cells.forEach((value, key_y) => {
       if(
         item_cur.id !== value.id &&
-        (value.col) <= col &&
-        (value.col + value.w) > col &&
-        (value.row) <= row &&
-        (value.row + value.h) > row
+        (value.defaultColumn) <= defaultColumn &&
+        (value.defaultColumn + value.colspan) > defaultColumn &&
+        (value.defaultRow) <= defaultRow &&
+        (value.defaultRow + value.rowspan) > defaultRow
       ){
         //console.log("available_item:::value::", value)
         count+= 1;
@@ -456,18 +456,18 @@ class Sortable{
     if(count > 0 ){
       return false
     }else{
-      if(!this.state.allow_use_empty){
-        // console.log("available_item_on_old_order:::", this.available_item_on_old_order(row, col), this.state.allow_use_empty)
+      if(!this.state.isDropOnEmptyAreaAllowed){
+        // console.log("available_item_on_old_order:::", this.available_item_on_old_order(defaultRow, defaultColumn), this.state.isDropOnEmptyAreaAllowed)
 
-        if(!this.available_item_on_old_order(row, col)){
+        if(!this.available_item_on_old_order(defaultRow, defaultColumn)){
           // console.log("return true")
-          const max_right_col = this.get_right_column_average(row)
-          if((col + item_cur.w-1) <= max_right_col){
+          const max_right_col = this.get_right_column_average(defaultRow)
+          if((defaultColumn + item_cur.colspan-1) <= max_right_col){
             return true
           }else{
             return false
           }
-          // if(this.cur_item_myself(row, col)){
+          // if(this.cur_item_myself(defaultRow, defaultColumn)){
           //   return false
           // }else{
           //   return true
@@ -482,17 +482,17 @@ class Sortable{
     }
   }
 
-  verify_is_owner(row, col){
+  verify_is_owner(defaultRow, defaultColumn){
     const {lastPress} = this.state;
     let res_is_owner = false
 
     if(
-      row >= lastPress.row &&
-      row < (lastPress.row + lastPress.h)
+      defaultRow >= lastPress.defaultRow &&
+      defaultRow < (lastPress.defaultRow + lastPress.rowspan)
     ){
       if(
-        col >= lastPress.col &&
-        col < (lastPress.col + lastPress.w)
+        defaultColumn >= lastPress.defaultColumn &&
+        defaultColumn < (lastPress.defaultColumn + lastPress.colspan)
       ){
         res_is_owner = true;
       }
@@ -500,35 +500,35 @@ class Sortable{
     return res_is_owner
   }
 
-  available_item_left_right(row, col){
-    //console.log("available_item_left_right", col, row)
+  available_item_left_right(defaultRow, defaultColumn){
+    //console.log("available_item_left_right", defaultColumn, defaultRow)
     const {lastPress} = this.state;
 
     //verify is move to myself
-    const res_is_owner = this.verify_is_owner(row, col)
+    const res_is_owner = this.verify_is_owner(defaultRow, defaultColumn)
     if(res_is_owner){ return false}
 
     let item_cur = this.get_item_id(lastPress.id)
     let copy = Object.assign({}, this.state);
     let count = 0;
-    copy.order.forEach((value, key_y) => {
+    copy.cells.forEach((value, key_y) => {
       if(
         item_cur.id !== value.id &&
-        (value.col) <= col &&
-        (value.col+value.w) > col &&
-        (value.row) <= row &&
-        (value.row + value.h) > row
+        (value.defaultColumn) <= defaultColumn &&
+        (value.defaultColumn+value.colspan) > defaultColumn &&
+        (value.defaultRow) <= defaultRow &&
+        (value.defaultRow + value.rowspan) > defaultRow
       ){
         count+= 1;
       }
     })
 
-    const max_column = this.get_right_column_without_cur(row);
+    const max_column = this.get_right_column_without_cur(defaultRow);
     if(max_column === 0 || count > 0){
       if(max_column === 0){
-        //console.log("available_item_left_right:::", this.available_item_on_old_order(row, col), this.state.allow_use_empty)
-        if(this.state.allow_use_empty){
-          if(this.available_item_on_old_order(row, col)){
+        //console.log("available_item_left_right:::", this.available_item_on_old_order(defaultRow, defaultColumn), this.state.isDropOnEmptyAreaAllowed)
+        if(this.state.isDropOnEmptyAreaAllowed){
+          if(this.available_item_on_old_order(defaultRow, defaultColumn)){
             return true
           }else{
             return false
@@ -537,10 +537,10 @@ class Sortable{
       }
       return false
     }else{
-      const max_column_average = this.get_right_column_average(row);
-      // console.log("max_column::::", max_column, max_column_average, col)
+      const max_column_average = this.get_right_column_average(defaultRow);
+      // console.log("max_column::::", max_column, max_column_average, defaultColumn)
       if((max_column +1) !== max_column_average){
-        if((max_column+1) < col && col <= max_column_average){
+        if((max_column+1) < defaultColumn && defaultColumn <= max_column_average){
           return false
         }
       }
@@ -548,32 +548,32 @@ class Sortable{
     }
   }
 
-  when_available_item_left_right(row, col){
-    //console.log("available_item_left_right", col, row)
+  when_available_item_left_right(defaultRow, defaultColumn){
+    //console.log("available_item_left_right", defaultColumn, defaultRow)
     const {lastPress} = this.state;
 
     //verify is move to myself
-    const res_is_owner = this.verify_is_owner(row, col)
+    const res_is_owner = this.verify_is_owner(defaultRow, defaultColumn)
     if(res_is_owner){ return false}
 
     let item_cur = this.get_item_id(lastPress.id)
     let copy = Object.assign({}, this.state);
     let count = 0;
     let search_value = null;
-    copy.order.forEach((value, key_y) => {
+    copy.cells.forEach((value, key_y) => {
       if(
         item_cur.id !== value.id &&
-        (value.col) <= col &&
-        (value.col+value.w) > col &&
-        (value.row) <= row &&
-        (value.row + value.h) > row
+        (value.defaultColumn) <= defaultColumn &&
+        (value.defaultColumn+value.colspan) > defaultColumn &&
+        (value.defaultRow) <= defaultRow &&
+        (value.defaultRow + value.rowspan) > defaultRow
       ){
         count+= 1;
-        console.log("value::value::", value)
+        // console.log("value::value::", value)
         search_value = value
       }
     })
-    if(count == 1){
+    if(count === 1){
       return search_value
     }else{
       return null
@@ -587,17 +587,17 @@ class Sortable{
     let item_on = this.get_item_id(item.id)
     let copy = Object.assign({}, this.state);
     let count = 0;
-    copy.order.forEach((value, key_y) => {
-      Array.from(Array(value.h).keys()).forEach((h, key_h) => {
-        //console.log("......", h+1)
-        Array.from(Array(value.w).keys()).forEach((w, key_w) => {
+    copy.cells.forEach((value, key_y) => {
+      Array.from(Array(value.rowspan).keys()).forEach((rowspan, key_h) => {
+        //console.log("......", rowspan+1)
+        Array.from(Array(value.colspan).keys()).forEach((colspan, key_w) => {
           if(
             lastPress.id !== value.id &&
             item.id !== value.id &&
-            (value.col + w) >= (item_on.col -1) &&
-            (value.col + w) <= (item_on.col+item_on.w-1) &&
-            (value.row + h) >= (item_on.row) &&
-            (value.row + h) <= (item_on.row + (item_on.h-1))
+            (value.defaultColumn + colspan) >= (item_on.defaultColumn -1) &&
+            (value.defaultColumn + colspan) <= (item_on.defaultColumn+item_on.colspan-1) &&
+            (value.defaultRow + rowspan) >= (item_on.defaultRow) &&
+            (value.defaultRow + rowspan) <= (item_on.defaultRow + (item_on.rowspan-1))
           ){
             count += 1
           }
@@ -618,18 +618,18 @@ class Sortable{
     //console.log("item_onlie", item_on)
     let copy = Object.assign({}, this.state);
     let count = 0;
-    copy.order.forEach((value, key_y) => {
-      Array.from(Array(value.h).keys()).forEach((h, key_h) => {
-        //console.log("......", h+1)
-        Array.from(Array(value.w).keys()).forEach((w, key_w) => {
-          //console.log("......", w+1)
+    copy.cells.forEach((value, key_y) => {
+      Array.from(Array(value.rowspan).keys()).forEach((rowspan, key_h) => {
+        //console.log("......", rowspan+1)
+        Array.from(Array(value.colspan).keys()).forEach((colspan, key_w) => {
+          //console.log("......", colspan+1)
           if(
             lastPress.id !== value.id &&
             item.id !== value.id &&
-            (value.col+w) >= (item_on.col) &&
-            (value.col+w) <= (item_on.col+item_on.w) &&
-            (value.row+h) >= (item_on.row) &&
-            (value.row+h) <= (item_on.row + (item_on.h-1))
+            (value.defaultColumn+colspan) >= (item_on.defaultColumn) &&
+            (value.defaultColumn+colspan) <= (item_on.defaultColumn+item_on.colspan) &&
+            (value.defaultRow+rowspan) >= (item_on.defaultRow) &&
+            (value.defaultRow+rowspan) <= (item_on.defaultRow + (item_on.rowspan-1))
           ){
             count += 1
           }
@@ -650,17 +650,17 @@ class Sortable{
     // console.log("item_onlie", item_on)
     let copy = Object.assign({}, this.state);
     let count = 0;
-    copy.order.forEach((value, key_y) => {
-      Array.from(Array(value.h).keys()).forEach((h, key_h) => {
-        //console.log("......", h+1)
-        Array.from(Array(value.w).keys()).forEach((w, key_w) => {
+    copy.cells.forEach((value, key_y) => {
+      Array.from(Array(value.rowspan).keys()).forEach((rowspan, key_h) => {
+        //console.log("......", rowspan+1)
+        Array.from(Array(value.colspan).keys()).forEach((colspan, key_w) => {
           if(
             lastPress.id !== value.id &&
             item.id !== value.id &&
-            (value.col+w) >= (item_on.col) &&
-            (value.col+w) <= (item_on.col+item_on.w-1) &&
-            (value.row+h) >= (item_on.row) &&
-            (value.row+h) <= (item_on.row + (item_on.h-1) + 1)
+            (value.defaultColumn+colspan) >= (item_on.defaultColumn) &&
+            (value.defaultColumn+colspan) <= (item_on.defaultColumn+item_on.colspan-1) &&
+            (value.defaultRow+rowspan) >= (item_on.defaultRow) &&
+            (value.defaultRow+rowspan) <= (item_on.defaultRow + (item_on.rowspan-1) + 1)
           ){
             count += 1
           }
@@ -681,17 +681,17 @@ class Sortable{
     let item_on = this.get_item_id(item.id)
     let copy = Object.assign({}, this.state);
     let count = 0;
-    copy.order.forEach((value, key_y) => {
-      Array.from(Array(value.h).keys()).forEach((h, key_h) => {
-        //console.log("......", h+1)
-        Array.from(Array(value.w).keys()).forEach((w, key_w) => {
+    copy.cells.forEach((value, key_y) => {
+      Array.from(Array(value.rowspan).keys()).forEach((rowspan, key_h) => {
+        //console.log("......", rowspan+1)
+        Array.from(Array(value.colspan).keys()).forEach((colspan, key_w) => {
           if(
             lastPress.id !== value.id &&
             item.id !== value.id &&
-            (value.col + w)>= (item_on.col) &&
-            (value.col + w) <= (item_on.col+item_on.w-1) &&
-            (value.row + h) >= (item_on.row-1) &&
-            (value.row + h) <= (item_on.row + (item_on.h-1))
+            (value.defaultColumn + colspan)>= (item_on.defaultColumn) &&
+            (value.defaultColumn + colspan) <= (item_on.defaultColumn+item_on.colspan-1) &&
+            (value.defaultRow + rowspan) >= (item_on.defaultRow-1) &&
+            (value.defaultRow + rowspan) <= (item_on.defaultRow + (item_on.rowspan-1))
           ){
             count += 1
           }
@@ -707,24 +707,24 @@ class Sortable{
 
   move_item_on_current_row_col(currentRow, currentCol){
     const {lastPress} = this.state;
-    this.state.order.forEach((value, key) => {
+    this.state.cells.forEach((value, key) => {
       if(lastPress.id === value.id){
 
-        value.col = currentCol
-        value.row = currentRow
-        if(this.state.sortable_mode === "left_right"){
-          value.h = 1
-          value.w = 1
+        value.defaultColumn = currentCol
+        value.defaultRow = currentRow
+        if(this.state.mode === "SORT"){
+          value.rowspan = 1
+          value.colspan = 1
           let size;
-          if(this.state.init_size[`${value.row}_${value.col}`]){
-            size = this.state.init_size[`${value.row}_${value.col}`]
+          if(this.state.init_size[`${value.defaultRow}_${value.defaultColumn}`]){
+            size = this.state.init_size[`${value.defaultRow}_${value.defaultColumn}`]
             // is_not_move = true
           }
           if(size){
-            value.h = size.h
-            value.w = size.w
-            value.width = value.w * this.state.step_x + (value.w-1)*this.state.delta
-            value.height = value.h * this.state.step_y + (value.h-1)*this.state.delta
+            value.rowspan = size.rowspan
+            value.colspan = size.colspan
+            value.width = value.colspan * this.state.cellWidth + (value.colspan-1)*this.state.cellSpacing
+            value.height = value.rowspan * this.state.cellHeight + (value.rowspan-1)*this.state.cellSpacing
           }
         }
       }
@@ -736,13 +736,13 @@ class Sortable{
     const {lastPress} = this.state;
     let copy = Object.assign({}, this.state);
     let result = []
-    copy.order.forEach((value, key_y) => {
+    copy.cells.forEach((value, key_y) => {
       if(lastPress.id!==value.id){
         if(
-          value.col >= (currentCol) &&
-          value.col <= (currentCol+this.state.w-1) &&
-          value.row >= currentRow &&
-          value.row <= (currentRow + (this.state.h-1))
+          value.defaultColumn >= (currentCol) &&
+          value.defaultColumn <= (currentCol+this.state.colspan-1) &&
+          value.defaultRow >= currentRow &&
+          value.defaultRow <= (currentRow + (this.state.rowspan-1))
         ){
           result.push(value)
         }
@@ -756,13 +756,13 @@ class Sortable{
     const {lastPress} = this.state;
     let copy = Object.assign({}, this.state);
     let result = []
-    copy.order.forEach((value, key_y) => {
+    copy.cells.forEach((value, key_y) => {
       if(lastPress.id!==value.id){
         if(
-          value.col >= currentCol &&
-          value.col <= (currentCol+this.state.w-1) &&
-          value.row >= currentRow &&
-          value.row <= (currentRow + (this.state.h-1))
+          value.defaultColumn >= currentCol &&
+          value.defaultColumn <= (currentCol+this.state.colspan-1) &&
+          value.defaultRow >= currentRow &&
+          value.defaultRow <= (currentRow + (this.state.rowspan-1))
         ){
           result.push(value)
         }
@@ -776,13 +776,13 @@ class Sortable{
     const {lastPress} = this.state;
     let copy = Object.assign({}, this.state);
     let result = []
-    copy.order.forEach((value, key_y) => {
+    copy.cells.forEach((value, key_y) => {
       if(lastPress.id!==value.id){
         if(
-          value.row >= (currentRow) &&
-          value.row <= (currentRow+this.state.h-1) &&
-          value.col >= currentCol &&
-          value.col <= (currentCol + (this.state.w-1))
+          value.defaultRow >= (currentRow) &&
+          value.defaultRow <= (currentRow+this.state.rowspan-1) &&
+          value.defaultColumn >= currentCol &&
+          value.defaultColumn <= (currentCol + (this.state.colspan-1))
         ){
           result.push(value)
         }
@@ -796,13 +796,13 @@ class Sortable{
     const {lastPress} = this.state;
     let copy = Object.assign({}, this.state);
     let result = []
-    copy.order.forEach((value, key_y) => {
+    copy.cells.forEach((value, key_y) => {
       if(lastPress.id!==value.id){
         if(
-          value.row >= (currentRow) &&
-          value.row <= (currentRow+this.state.h-1) &&
-          value.col >= currentCol &&
-          value.col <= (currentCol + (this.state.w-1))
+          value.defaultRow >= (currentRow) &&
+          value.defaultRow <= (currentRow+this.state.rowspan-1) &&
+          value.defaultColumn >= currentCol &&
+          value.defaultColumn <= (currentCol + (this.state.colspan-1))
         ){
           result.push(value)
         }
@@ -814,13 +814,13 @@ class Sortable{
   get_last(id){
     const {lastPress} = this.state;
     let copy = Object.assign({}, this.state);
-    copy.order.forEach((value, key_y) => {
+    copy.cells.forEach((value, key_y) => {
       if(lastPress.id===value.id){
         let cp_value = Object.assign({}, value);
-        this.state.last_col = cp_value.col
-        this.state.last_row = cp_value.row
-        this.state.w = cp_value.w
-        this.state.h = cp_value.h
+        this.state.last_col = cp_value.defaultColumn
+        this.state.last_row = cp_value.defaultRow
+        this.state.colspan = cp_value.colspan
+        this.state.rowspan = cp_value.rowspan
       }
     })
   }
@@ -828,7 +828,7 @@ class Sortable{
   get_item_id(id){
     let copy = Object.assign({}, this.state);
     let result = null
-    copy.order.forEach((value, key_y) => {
+    copy.cells.forEach((value, key_y) => {
       if(value.id===id){
         result = Object.assign({}, value);
       }
@@ -846,8 +846,8 @@ class Sortable{
       lastPress_row = this.state.currentRow
       lastPress_col = this.state.currentCol
     }else{
-      lastPress_row = lastPress.row
-      lastPress_col = lastPress.col
+      lastPress_row = lastPress.defaultRow
+      lastPress_col = lastPress.defaultColumn
     }
 
     //verify is move to myself
@@ -856,47 +856,47 @@ class Sortable{
       (!res_is_owner && this.state.res_is_owner) ||
       (!this.state.count_change)
     ){
-      lastPress_row = lastPress.row
-      lastPress_col = lastPress.col
+      lastPress_row = lastPress.defaultRow
+      lastPress_col = lastPress.defaultColumn
     }
 
     let copy = Object.assign({}, this.state);
     let result = []
     if(!res_is_owner){
-      copy.order.forEach((value, key_y) => {
+      copy.cells.forEach((value, key_y) => {
         if(lastPress.id!==value.id){
           if(
-            value.row >= lastPress_row &&
-            value.row <= (currentRow)
+            value.defaultRow >= lastPress_row &&
+            value.defaultRow <= (currentRow)
           ){
             if(currentRow !== lastPress_row){
               if(
-                value.col > lastPress_col &&
-                value.row === lastPress_row &&
-                value.row <= currentRow
+                value.defaultColumn > lastPress_col &&
+                value.defaultRow === lastPress_row &&
+                value.defaultRow <= currentRow
               ){
                 // console.log("between1::>>>>>>>>>>>>", value.id)
                 result.push(value)
               }
               if(
-                value.row > lastPress_row &&
-                value.row < currentRow
+                value.defaultRow > lastPress_row &&
+                value.defaultRow < currentRow
               ){
                 // console.log("between2::>>>>>>>>>>>>", value.id)
                 result.push(value)
               }
               if(
-                value.col <= currentCol &&
-                value.row === currentRow
+                value.defaultColumn <= currentCol &&
+                value.defaultRow === currentRow
               ){
                 // console.log("between3::>>>>>>>>>>>>", value.id)
                 result.push(value)
               }
             }else{
               if(
-                value.col > lastPress_col &&
-                value.col <= currentCol &&
-                value.row <= currentRow
+                value.defaultColumn > lastPress_col &&
+                value.defaultColumn <= currentCol &&
+                value.defaultRow <= currentRow
               ){
                 // console.log("between000::>>>>>>>>>>>>", value.id)
                 result.push(value)
@@ -911,17 +911,17 @@ class Sortable{
   }
 
   compare_forward(a, b) {
-    if(a.row === b.row){
-      if(a.col === b.col){
+    if(a.defaultRow === b.defaultRow){
+      if(a.defaultColumn === b.defaultColumn){
         return 0
       }
-      if(a.col > b.col){
+      if(a.defaultColumn > b.defaultColumn){
         return 1
       }else{
         return -1
       }
     }
-    if(a.row > b.row){
+    if(a.defaultRow > b.defaultRow){
       return 1
     }else{
       return -1
@@ -929,17 +929,17 @@ class Sortable{
   }
 
   compare_back(a, b) {
-    if(a.row === b.row){
-      if(a.col === b.col){
+    if(a.defaultRow === b.defaultRow){
+      if(a.defaultColumn === b.defaultColumn){
         return 0
       }
-      if(a.col > b.col){
+      if(a.defaultColumn > b.defaultColumn){
         return -1
       }else{
         return 1
       }
     }
-    if(a.row > b.row){
+    if(a.defaultRow > b.defaultRow){
       return -1
     }else{
       return 1
@@ -955,8 +955,8 @@ class Sortable{
       lastPress_row = this.state.currentRow
       lastPress_col = this.state.currentCol
     }else{
-      lastPress_row = lastPress.row
-      lastPress_col = lastPress.col
+      lastPress_row = lastPress.defaultRow
+      lastPress_col = lastPress.defaultColumn
     }
 
     const res_is_owner = this.verify_is_owner(currentRow, currentCol)
@@ -964,43 +964,43 @@ class Sortable{
       (!res_is_owner && this.state.res_is_owner) ||
       (!this.state.count_change)
     ){
-      lastPress_row = lastPress.row
-      lastPress_col = lastPress.col
+      lastPress_row = lastPress.defaultRow
+      lastPress_col = lastPress.defaultColumn
     }
     let result = []
     if(!res_is_owner){
       let copy = Object.assign({}, this.state);
-      copy.order.forEach((value, key_y) => {
+      copy.cells.forEach((value, key_y) => {
         if(lastPress.id!==value.id){
           if(
-            value.row <= lastPress_row &&
-            value.row >= (currentRow)
+            value.defaultRow <= lastPress_row &&
+            value.defaultRow >= (currentRow)
           ){
             if(currentRow !== lastPress_row){
               if(
-                value.col < lastPress_col &&
-                value.row === lastPress_row &&
-                value.row >= currentRow
+                value.defaultColumn < lastPress_col &&
+                value.defaultRow === lastPress_row &&
+                value.defaultRow >= currentRow
               ){
                 result.push(value)
               }
               if(
-                value.row < lastPress_row &&
-                value.row > currentRow
+                value.defaultRow < lastPress_row &&
+                value.defaultRow > currentRow
               ){
                 result.push(value)
               }
               if(
-                value.col >= currentCol &&
-                value.row === currentRow
+                value.defaultColumn >= currentCol &&
+                value.defaultRow === currentRow
               ){
                 result.push(value)
               }
             }else{
               if(
-                value.col < lastPress_col &&
-                value.col >= currentCol &&
-                value.row >= currentRow
+                value.defaultColumn < lastPress_col &&
+                value.defaultColumn >= currentCol &&
+                value.defaultRow >= currentRow
               ){
                 result.push(value)
               }
@@ -1018,14 +1018,14 @@ class Sortable{
 
     // console.log("this.state.currentCol", this.state.currentCol)
     if(this.state.currentCol){
-      // col<<<<<<<<<<<<<<<<<<<<<
+      // defaultColumn<<<<<<<<<<<<<<<<<<<<<
       if(currentCol < this.state.currentCol){
         //console.log("currentCol", currentCol)
         this.get_item_left(currentRow, currentCol).forEach((value, key_y) => {
 
-          if(this.available_item_right(value, this.state.w)){
+          if(this.available_item_right(value, this.state.colspan)){
             //console.log("move right:::", value)
-            this.move_item_right(value, this.state.w)
+            this.move_item_right(value, this.state.colspan)
           }
         })
         // console.log("this.available_item(currentRow, currentCol)", this.available_item(currentRow, currentCol))
@@ -1033,12 +1033,12 @@ class Sortable{
           this.move_item_on_current_row_col(currentRow, currentCol)
         }
       }
-      // col>>>>>>>>>>>>>>>>>>>>>
+      // defaultColumn>>>>>>>>>>>>>>>>>>>>>
       if(currentCol > this.state.currentCol){
         //console.log("currentCol", currentCol)
         this.get_item_right(currentRow, currentCol).forEach((value, key_y) => {
-          if(this.available_item_left(value, this.state.w)){
-            this.move_item_left(value, this.state.w)
+          if(this.available_item_left(value, this.state.colspan)){
+            this.move_item_left(value, this.state.colspan)
           }
         })
         // console.log("_______________")
@@ -1049,11 +1049,11 @@ class Sortable{
       }
     }
     if(this.state.currentRow){
-      //row---------------------------
+      //defaultRow---------------------------
       if(currentRow < this.state.currentRow){
         this.get_item_top(currentRow, currentCol).forEach((value, key_y) => {
-          if(this.available_item_bottom(value, this.state.w)){
-            this.move_item_bottom(value, this.state.w)
+          if(this.available_item_bottom(value, this.state.colspan)){
+            this.move_item_bottom(value, this.state.colspan)
           }
         })
         // console.log("this.available_item(currentRow, currentCol)", this.available_item(currentRow, currentCol))
@@ -1061,11 +1061,11 @@ class Sortable{
           this.move_item_on_current_row_col(currentRow, currentCol)
         }
       }
-      //row++++++++++++++++++++++++++++
+      //defaultRow++++++++++++++++++++++++++++
       if(currentRow > this.state.currentRow){
         this.get_item_bottom(currentRow, currentCol).forEach((value, key_y) => {
-          if(this.available_item_top(value, this.state.w)){
-            this.move_item_top(value, this.state.w)
+          if(this.available_item_top(value, this.state.colspan)){
+            this.move_item_top(value, this.state.colspan)
           }
         })
         // console.log("this.available_item(currentRow, currentCol)", this.available_item(currentRow, currentCol))
@@ -1083,14 +1083,14 @@ class Sortable{
     // console.log("mode::left_right_Sortable:::", currentRow, currentCol)
 
     if(currentCol > this.state.currentCol || currentRow > this.state.currentRow){
-      // console.log("COl:>>>>>>>>>>>>>>>>", Object.assign({}, this.state.order))
+      // console.log("COl:>>>>>>>>>>>>>>>>", Object.assign({}, this.state.cells))
       // console.log("available::", this.available_item_left_right(currentRow, currentCol))
       let value_to_left = []
       if(!this.available_item_on_old_order(currentRow, currentCol)){
         const search_value = this.when_available_item_left_right(currentRow, currentCol)
         if(search_value){
-          currentRow = search_value.row
-          currentCol= search_value.col
+          currentRow = search_value.defaultRow
+          currentCol= search_value.defaultColumn
         }
         this.get_item_between_forward(currentRow, currentCol).forEach((value, key_y) => {
           // console.log("get_item_between_forward ;; move_item_left :VALUE:", value)
@@ -1113,15 +1113,15 @@ class Sortable{
       }
     }
     if(currentCol < this.state.currentCol || currentRow < this.state.currentRow){
-      // console.log("back:<<<<<<<<<<<<<<<", Object.assign({}, this.state.order))
+      // console.log("back:<<<<<<<<<<<<<<<", Object.assign({}, this.state.cells))
       // console.log("available::", this.available_item_left_right(currentRow, currentCol))
       let value_to_right = []
       if(!this.available_item_on_old_order(currentRow, currentCol)){
-        // console.log("return col row for need item", this.when_available_item_left_right(currentRow, currentCol))
+        // console.log("return defaultColumn defaultRow for need item", this.when_available_item_left_right(currentRow, currentCol))
         const search_value = this.when_available_item_left_right(currentRow, currentCol)
         if(search_value){
-          currentRow = search_value.row
-          currentCol= search_value.col
+          currentRow = search_value.defaultRow
+          currentCol= search_value.defaultColumn
         }
         this.get_item_between_back(currentRow, currentCol).forEach((value, key_y) => {
           // console.log("value::", value)
@@ -1134,7 +1134,7 @@ class Sortable{
         this.move_item_on_current_row_col(currentRow, currentCol)
         count_change += 1
       }else{
-        // console.log("return col row for need item", this.when_available_item_left_right(currentRow, currentCol))
+        // console.log("return defaultColumn defaultRow for need item", this.when_available_item_left_right(currentRow, currentCol))
         value_to_right.forEach((value, key_y) => {
           // console.log("value::", value)
           this.move_item_left(value, 1)
@@ -1152,21 +1152,21 @@ class Sortable{
     if (isPressed) {
       let copy = Object.assign({}, this.state);
       const mouseY = pageY - topDeltaY ;
-      const currentRow = this.clamp(Math.round(mouseY / (this.state.step_y+this.state.delta)), 1, 10);
+      const currentRow = this.clamp(Math.round(mouseY / (this.state.cellHeight+this.state.cellSpacing)), 1, 10);
 
       const mouseX = pageX - topDeltaX;
-      const currentCol = this.clamp(Math.round(mouseX / (this.state.step_x+this.state.delta)), 1, this.get_right_column_average(currentRow));
+      const currentCol = this.clamp(Math.round(mouseX / (this.state.cellWidth+this.state.cellSpacing)), 1, this.get_right_column_average(currentRow));
 
       // console.log("currentRow::", currentRow)
       // console.log("currentCol::", currentCol)
 
       let new_row = []
-      new_row = copy.order
+      new_row = copy.cells
 
-      if(this.state.sortable_mode === "swap"){
+      if(this.state.mode === "SWAP"){
         this.state.count_change = this.default_Sortable(currentRow, currentCol)
       }
-      if(this.state.sortable_mode === "left_right"){
+      if(this.state.mode === "SORT"){
         this.state.count_change = this.left_right_Sortable(currentRow, currentCol)
       }
 
@@ -1181,7 +1181,7 @@ class Sortable{
 
       this.state.mouseY = mouseY
       this.state.mouseX = mouseX
-      this.state.order = new_row
+      this.state.cells = new_row
 
     }
   }
@@ -1192,9 +1192,9 @@ class Sortable{
     this.state.mouseY = pressY
     this.state.mouseX = pressX
     // let copy = Object.assign({}, this.state);
-    // this.state.old_order = copy.order;
+    // this.state.old_order = copy.cells;
     // console.log("this.state.old_order:::", this.state.old_order)
-    this.state.old_order = this.clone(this.state.order)
+    this.state.old_order = this.clone(this.state.cells)
     this.state.topDeltaY = pageY - pressY
     this.state.topDeltaX = pageX - pressX
   }
@@ -1205,7 +1205,7 @@ class Sortable{
     this.state.topDeltaX = 0
     this.state.currentCol = null
     this.state.currentRow = null
-    this.state.old_order = this.clone(this.state.order)
+    this.state.old_order = this.clone(this.state.cells)
   }
 }
 
