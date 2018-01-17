@@ -45,14 +45,14 @@ window.addEventListener('mouseup', handleMouseUp);
 handleTouchStart = (key, pressLocation, e) => {
   if(!this.props.isGridLocked){
     // console.log("handleTouchStart", key, pressLocation, e.touches[0])
-    this.handleMouseDown(key, pressLocation, e.touches[0]);
+    handleMouseDown(key, pressLocation, e.touches[0]);
   }
 };
 
 handleTouchMove = (e) => {
   if(!this.props.isGridLocked){
     e.preventswipe();
-    this.handleMouseMove(e.touches[0]);
+    handleMouseMove(e.touches[0]);
   }
 };
 
@@ -72,7 +72,7 @@ handleMouseDown = (pos, [pressX, pressY], {pageX, pageY}) => {
 
 handleMouseUp = () => {
     sortable.handleMouseUp()
-    let st = this.sortable.get_state()
+    let st = sortable.get_state()
     ...
 };
 ```
