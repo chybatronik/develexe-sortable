@@ -25,12 +25,12 @@ import Sortable from 'develexe-sortable';
 Use Sortable class:
 ```javascript
 sortable = new Sortable(
-  props.cellWidth,
-  props.cellHeight,
-  props.cellSpacing,
-  props.mode,
-  props.cells,
-  props.isDropOnEmptyAreaAllowed
+  cellWidth,               // set width item
+  cellHeight,              // set height item
+  cellSpacing,             // set distance between items
+  mode,                    //set sortable mode: "SWAP" or "SORT"
+  cells,                   // array of items with options
+  isDropOnEmptyAreaAllowed // allow to move on empty area
 );
 state = sortable.get_state();
 ```
