@@ -37,15 +37,44 @@ state = sortable.get_state();
 
 Add events:
 ```javascript
-sortable = new Sortable(
-  cellWidth,               // set width item
-  cellHeight,              // set height item
-  cellSpacing,             // set distance between items
-  mode,                    //set sortable mode: "SWAP" or "SORT"
-  cells,                   // array of items with options
-  isDropOnEmptyAreaAllowed // allow to move on empty cell
-);
-state = sortable.get_state();
+window.addEventListener('touchmove', handleTouchMove);
+window.addEventListener('touchend', handleMouseUp);
+window.addEventListener('mousemove', handleMouseMove);
+window.addEventListener('mouseup', handleMouseUp);
+
+handleTouchStart = (key, pressLocation, e) => {
+  if(!this.props.isGridLocked){
+    // console.log("handleTouchStart", key, pressLocation, e.touches[0])
+    this.handleMouseDown(key, pressLocation, e.touches[0]);
+  }
+};
+
+handleTouchMove = (e) => {
+  if(!this.props.isGridLocked){
+    e.preventswipe();
+    this.handleMouseMove(e.touches[0]);
+  }
+};
+
+handleMouseMove = ({pageX, pageY}) => {
+  sortable.handleMouseMove({pageX, pageY})
+  let st = sortable.get_state()
+  ....
+};
+
+handleMouseDown = (pos, [pressX, pressY], {pageX, pageY}) => {
+  // console.log("handleMouseDown:::", pos)
+  sortable.handleMouseDown(pos, [pressX, pressY], {pageX, pageY})
+  let st = sortable.get_state()
+  ...
+
+};
+
+handleMouseUp = () => {
+    sortable.handleMouseUp()
+    let st = this.sortable.get_state()
+    ...
+};
 ```
 
 ## Build
