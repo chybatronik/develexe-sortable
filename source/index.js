@@ -1,14 +1,14 @@
 
 class Sortable{
-  constructor(cellWidth, cellHeight, cellSpacing, mode, cells, isDropOnEmptyAreaAllowed){
+  constructor(config){
     // console.log("sortable new")
-    cells = cells ? cells : [] //default_order
+    const cells = config.cells ? config.cells : [] //default_order
     this.state = {
-      mode: mode ? mode: "SORT", // default, SORT
+      mode: config.mode ? config.mode: "SORT", // default, SORT
       // size_mode: "SWAP", // default, stick
-      cellSpacing: cellSpacing ? cellSpacing: 5,
-      cellWidth: cellWidth ? cellWidth: 90,
-      cellHeight: cellHeight ? cellHeight: 90,
+      cellSpacing: config.cellSpacing ? config.cellSpacing: 5,
+      cellWidth: config.cellWidth ? config.cellWidth: 90,
+      cellHeight: config.cellHeight ? config.cellHeight: 90,
       mouseX: 0,
       mouseY: 0,
       // lastPress: -1,
@@ -18,8 +18,25 @@ class Sortable{
       cells: this.clone(cells),
       old_order: this.clone(cells),
       init_size: this.get_init_size(cells),
-      isDropOnEmptyAreaAllowed: isDropOnEmptyAreaAllowed ? isDropOnEmptyAreaAllowed : false
+
+      isDropOnEmptyAreaAllowed: config.isDropOnEmptyAreaAllowed ? config.isDropOnEmptyAreaAllowed : false,
+
+      handleTouchMove: config.handleTouchMove,
+      handleMouseUp: config.handleMouseUp,
+      handleMouseMove: config.handleMouseMove,
+      handleMouseDown: config.handleMouseDown,
+
+      onCellDragStart: config.onCellDragStart,
+      onCellDrop: config.onCellDrop,
+      isGridLocked: config.isGridLocked ? config.isGridLocked : false
+
     };
+    // console.log("window:::", window)
+    window.addEventListener('touchmove', this.onHandleTouchMove);
+    window.addEventListener('touchend', this.onHandleMouseUp);
+    window.addEventListener('mousemove', this.onHandleMouseMove);
+    window.addEventListener('mouseup', this.onHandleMouseUp);
+
   }
 
   clone(obj){
@@ -1146,6 +1163,69 @@ class Sortable{
     return count_change
   }
 
+  onHandleTouchMove = (e) => {
+    // console.log("onHandleTouchMove")
+    if(!this.state.isGridLocked){
+      e.preventswipe();
+      this.onHandleMouseMove(e.touches[0]);
+    }
+  }
+
+  onHandleMouseMove = ({pageX, pageY}) => {
+    if(!this.state.isGridLocked){
+      // if(this.state.isPressed){
+        // console.log("handleMouseMove pageX, pageY", pageX, pageY)
+        this.handleMouseMove({pageX, pageY})
+
+        // let st = this.get_state()
+        // this.setState({mouseY: st.mouseY, mouseX: st.mouseX, cells: st.cells });
+      // }
+    }
+  };
+
+  onHandleMouseDown = (pos, [pressX, pressY], {pageX, pageY}) => {
+    if(!this.state.isGridLocked){
+      // console.log("handleMouseDown:::", pos)
+      this.handleMouseDown(pos, [pressX, pressY], {pageX, pageY})
+      // let st = this.sortable.get_state()
+      if(this.state.onCellDragStart){
+        // console.log("onCellDragStart:::")
+        this.state.onCellDragStart(pos)
+      }
+      // this.setState({
+      //   lastPress: pos,
+      //   isPressed: st.isPressed,
+      //   mouseY: st.mouseY,
+      //   mouseX: st.mouseX
+      // });
+    }
+  };
+
+  onHandleMouseUp = () => {
+    if(!this.state.isGridLocked){
+      // console.log("handleMouseUp:::")
+      let is_call_callback = false
+      if(
+        this.state.onCellDrop //&&
+        //JSON.stringify(this.sortable.state.cells) !== JSON.stringify(this.sortable.state.old_order)
+      ){
+        is_call_callback = true
+      }
+
+      this.handleMouseUp()
+      let st = this.get_state()
+
+      if(is_call_callback){
+        this.state.onCellDrop(st)
+        // console.log("sortable.get_state()", st)
+      }
+
+      // this.setState({
+      //   isPressed: st.isPressed,
+      // });
+    }
+  };
+
   handleMouseMove({pageX, pageY}){
     const {isPressed, topDeltaY, topDeltaX} = this.state;
 
@@ -1183,6 +1263,8 @@ class Sortable{
       this.state.mouseX = mouseX
       this.state.cells = new_row
 
+      this.state.handleMouseMove({pageX, pageY, st:this.state})
+
     }
   }
 
@@ -1197,6 +1279,9 @@ class Sortable{
     this.state.old_order = this.clone(this.state.cells)
     this.state.topDeltaY = pageY - pressY
     this.state.topDeltaX = pageX - pressX
+
+    this.state.handleMouseDown(pos, [pressX, pressY], {pageX, pageY})
+
   }
 
   handleMouseUp(){
@@ -1206,6 +1291,9 @@ class Sortable{
     this.state.currentCol = null
     this.state.currentRow = null
     this.state.old_order = this.clone(this.state.cells)
+
+    this.state.handleMouseUp()
+
   }
 }
 
